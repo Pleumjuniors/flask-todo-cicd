@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from app import db
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
+    task = db.Column(db.String(120), nullable=False)
     done = db.Column(db.Boolean, default=False)
