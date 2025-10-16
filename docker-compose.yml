@@ -28,7 +28,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/todo_dev
       SECRET_KEY: dev-secret-key-12345
     ports:
-      - "5050:5000"
+      - "5000:5000"
     depends_on:
       db:
         condition: service_healthy
