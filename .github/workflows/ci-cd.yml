@@ -1,32 +1,46 @@
-name: CI/CD
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: todo_postgres
+    environment:
+      POSTGRES_DB: todo_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: todo_app
+    environment:
+      FLASK_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/todo_dev
+      SECRET_KEY: dev-secret-key-12345
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    networks:
+      - app_network
+    command: flask run --host=0.0.0.0
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+volumes:
+  postgres_data:
 
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install SQLAlchemy==2.0.23  # ✅ เพิ่มบรรทัดนี้
-
-    - name: Run tests with coverage
-      run: |
-        source venv/bin/activate
-        pytest --cov=app --cov-report=term-missing --cov-report=html
+networks:
+  app_network:
+    driver: bridge
